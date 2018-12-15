@@ -15,13 +15,33 @@ from sklearn.neural_network import multilayer_perceptron
 import re
 
 
+output_label_dict = {}
+views_dict =  {"affirmative action":("liberal", "conservative"), "daca immigration" :("liberal","conservative") ,
+	"assisted suicide" :("liberal","conservative"),"capital punishment" :("conservative","liberal"), 
+	"labor unions" :("liberal","conservative"), "vaccines" :("liberal","conservative"), "concealed weapons":("conservative", "liberal"), 
+	"self-driving cars" :("liberal","conservative"),"artificial intelligence":("liberal","conservative"), "donald trump":("conservative", "liberal"),
+	"planned parenthood": ("liberal","conservative"), "social security" :("liberal","conservative"), "nra" :("conservative", "liberal"), 
+	"fracking" :("liberal","conservative"), "nuclear energy":("conservative", "liberal"), "nsa surveillance" :("liberal","conservative"),
+	 "military spending":("conservative", "liberal"), 
+	"foreign aid" :("liberal","conservative"), "dakota access pipeline":("conservative", "liberal"), "oil drilling":("conservative", "liberal"), 
+	"paris climate agreement" :("liberal","conservative"), 
+	"trans pacific partnership" :("liberal","conservative"), "china tariffs":("conservative", "liberal"), "labor unions" :("liberal","conservative"), 
+	"universal basic income" :("liberal","conservative"), "paid sick leave" :("liberal","conservative"), "safe haven" :("liberal","conservative"),
+	 "medicaid" :("liberal","conservative"), 
+	"edward snowden" :("liberal","conservative"), "whistleblower protection" :("liberal","conservative"), "armed teachers":("conservative", "liberal"),
+	 "gun control" :("liberal","conservative"),
+	"in-state tuition" :("liberal","conservative"), "immigration ban":("conservative", "liberal"), "border wall":("conservative", "liberal"), 
+	"first amendment" :("liberal","conservative"), 
+	"confederate flag":("conservative", "liberal"), "death penalty":("conservative", "liberal"), "religious freedom act" :("liberal","conservative"),
+	"travel ban" :("liberal","conservative"),"obamacare" :("liberal","conservative"),"affordable care act":("liberal","conservative"),
+	"gay marriage":("liberal","conservative"),"marijuana":("liberal","conservative"),"net neutrality":("liberal","conservative"),"nsa":("liberal","conservative")}
 
 def load_dict(politicians, broken_keywords, keyword_tweet_dict, pipelines):
 	
 	data_list = []
 	for politician in politicians:
 		politician_dict = {}
-		print("Organizing "+politician+" tweets based on keywords...")
+		#print("Organizing "+politician+" tweets based on keywords...")
 		filename = "app_data/user_timelines/"+politician+".txt" 
 		file = open(filename,"r", encoding="utf-8")
 		broken_keywords_keys = broken_keywords.keys()
@@ -50,9 +70,9 @@ def load_dict(politicians, broken_keywords, keyword_tweet_dict, pipelines):
 					#keyword_tweet_dict[keyword] = updated_tuple
 					#prediction = clf.predict(tweet)
 					prediction = pipelines[0].predict([temp])[0].decode("utf-8") 
-					print(keyword)
-					print(temp)
-					print(prediction)
+					# print(keyword)
+					# print(temp)
+					# print(prediction)
 					if(prediction == 'Positive'):
 						politician_dict[keyword] += 1
 					elif(prediction == 'Negative'): 
@@ -76,12 +96,76 @@ def init_dict(keywords):
 		keyword_tweet_dict[keyword] = ()
 	return keyword_tweet_dict
 
-def print_dict(output_dict):
-	keyword_keys = list(output_dict.keys())
-	print("Keyword: "+keyword_keys[0])
-	for tweet in output_dict[keyword_keys[0]]:
-		print(tweet)
+def print_output(politicians,output):
+	for i in range(0,len(politicians)):
+		print(politicians[i])
+		print(output[i])
 		print("\n")
+
+
+
+def get_classifier_output(politician_output_dict,politician_names):
+	idx = 0
+	for politician in politician_names:
+		print(politician)
+		views = []
+		topics = politician_output_dict[idx].keys()
+		for topic in topics:
+			view = decide_view(topic,politician_output_dict[idx][topic])
+			views.append(view)
+		output_label_dict[politician] = label_politician(views)
+		idx = idx+1
+
+def evaluate(actual_dw_nominate,politician_output_dict,politician_names):
+	get_classifier_output(politician_output_dict,politician_names)
+	correct = 0
+	number_of_politicians = len(politician_names)
+	for politician in politician_names:
+		print(politician)
+		actual_label = translate_dw_nominate_score(actual_dw_nominate[politician])
+		print("True party: "+actual_label)
+		output_label = output_label_dict[politician]
+		print("Predicted party: "+output_label)
+		if actual_label == output_label:
+			correct +=1
+	acc = (correct/number_of_politicians)* 100
+	print("accuracy of party prediction: "+str(acc)+"%")
+
+
+def translate_dw_nominate_score(value):
+	if value <0:
+		return "democrat"
+	elif value>0:
+		return "republican"
+
+
+def decide_view(topic,score):
+	topic = topic.strip()
+	if score>0:
+		return views_dict[topic][0]
+	elif score<0:
+		return views_dict[topic][1]
+
+
+
+def label_politician(views):
+	liberal_count = 0
+	conservative_count = 0
+
+	for view in views:
+		if view == "liberal":
+			liberal_count += 1
+		elif view == "conservative":
+			conservative_count += 1
+	print(liberal_count)
+	print(conservative_count)
+	if liberal_count > conservative_count:
+		return "democrat"
+	elif conservative_count > liberal_count:
+		return "republican"
+	else:
+	 return "centrist"
+	
 
 
 def main():
@@ -139,7 +223,7 @@ def main():
 	    
 	    
 	    
-	keywords = ["Travel Ban", "Obamacare, Affordable care act", 
+	keywords = ["Travel Ban", "Obamacare", "Affordable care act", 
 	"Marijuana", "Net Neutrality", "Gay Marriage", 
 	"Affirmative Action", "DACA immigration" , 
 	"Assisted Suicide", "Capital punishment", 
@@ -152,8 +236,7 @@ def main():
 	"Universal Basic Income", "Paid Sick Leave", "Safe Haven", "Medicaid", 
 	"Edward Snowden", "Whistleblower Protection", "Armed Teachers", "Gun Control",
 	"In-State Tuition", "Immigration Ban", "Border Wall", "First Amendment", 
-	"Confederate Flag", "Death Penalty", "Religious Freedom Act", "NSA", "Donald Trump",
-	"DACA", "Obamacare"]
+	"Confederate Flag", "Death Penalty", "Religious Freedom Act", "NSA", "Donald Trump"]
 
 	politicians = ["SenFeinstein","SenKamalaHarris","SenSanders" ,"HillaryClinton",
 	"BarackObama","timkaine","JoeBiden","SenWarren","SenBooker","SenGillibrand",
@@ -184,10 +267,10 @@ def main():
 	broken_keywords = break_down(keywords)
 
 	output_dict = load_dict(politicians,broken_keywords,keyword_tweet_dict, pipelines)
-	
+
+	evaluate(politicians_dict,output_dict,politicians)
 	
 
-	print_dict(output_dict)
 
 
 if __name__ == "__main__":
