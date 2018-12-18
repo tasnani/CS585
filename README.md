@@ -33,4 +33,4 @@ search_tweets_by_keyword.py- retrieve tweets from Twitter on other political top
 
 temp.py- renaming label files
 
-app_data folder - contains datafiles for this project
+app_data folder - contains datafiles for this project such as tweets by topics, tweets by topic with emojis, tweets by topic with emojis preprocessed and tweet timelines of politicians
