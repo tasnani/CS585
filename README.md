@@ -32,3 +32,5 @@ polititians.py- create a dictionary holding political topics as keys and all pol
 search_tweets_by_keyword.py- retrieve tweets from Twitter on other political topics using the Twitter API
 
 temp.py- renaming label files
+
+app_data folder - contains datafiles for this project
